@@ -522,7 +522,8 @@ void CO_CANverifyErrors(CO_CANmodule_t *CANmodule) {
 
       //CAN TX or RX bus passive
       if(err & 0x02){
-         if(!CANmodule->firstCANtxMessage) CO_errorReport(EM, ERROR_CAN_TX_BUS_PASSIVE, err);
+         // HACK by Mike
+         // if(!CANmodule->firstCANtxMessage) CO_errorReport(EM, ERROR_CAN_TX_BUS_PASSIVE, err);
       }
       else{
          int16_t wasCleared;

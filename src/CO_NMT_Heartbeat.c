@@ -196,7 +196,7 @@ uint8_t CO_NMT_process(
     CANpassive = 0;
     if(CO_isError(NMT->EMpr->EM, ERROR_CAN_TX_BUS_PASSIVE) || CO_isError(NMT->EMpr->EM, ERROR_CAN_RX_BUS_PASSIVE)){
         printf("CANpassive!!\n\r");
-        CANpassive = 1;
+        CANpassive = 0; // HACK by Mike
     }
 
     //printf(" 2\r\n");
