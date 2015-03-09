@@ -459,8 +459,9 @@ int16_t CO_CANsend(CO_CANmodule_t *CANmodule, CO_CANtx_t *buffer) {
   
    //Was previous message sent or it is still waiting?
    if(buffer->bufferFull){
-      if(!CANmodule->firstCANtxMessage)//don't set error, if bootup message is still on buffers
-         CO_errorReport((CO_EM_t*)CANmodule->EM, ERROR_CAN_TX_OVERFLOW, 0);
+      // Hack
+      // if(!CANmodule->firstCANtxMessage)//don't set error, if bootup message is still on buffers
+         // CO_errorReport((CO_EM_t*)CANmodule->EM, ERROR_CAN_TX_OVERFLOW, 0);
       return CO_ERROR_TX_OVERFLOW;
    }
 
@@ -512,7 +513,8 @@ void CO_CANverifyErrors(CO_CANmodule_t *CANmodule) {
 
       //CAN RX bus overflow
       if(CANmodule->CANbaseAddress->RF0R & 0x08){
-         CO_errorReport(EM, ERROR_CAN_RXB_OVERFLOW, err);
+         // Hack
+         // CO_errorReport(EM, ERROR_CAN_RXB_OVERFLOW, err);
          CANmodule->CANbaseAddress->RF0R &=~0x08;//clear bits
       }
 
@@ -522,7 +524,7 @@ void CO_CANverifyErrors(CO_CANmodule_t *CANmodule) {
 
       //CAN TX or RX bus passive
       if(err & 0x02){
-         // HACK by Mike
+         // Hack
          // if(!CANmodule->firstCANtxMessage) CO_errorReport(EM, ERROR_CAN_TX_BUS_PASSIVE, err);
       }
       else{
