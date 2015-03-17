@@ -460,14 +460,15 @@ int16_t CO_CANsend(CO_CANmodule_t *CANmodule, CO_CANtx_t *buffer) {
    //Was previous message sent or it is still waiting?
    if(buffer->bufferFull){
       // Hack
-      // if(!CANmodule->firstCANtxMessage)//don't set error, if bootup message is still on buffers
+      if(!CANmodule->firstCANtxMessage) {} //don't set error, if bootup message is still on buffers
          // CO_errorReport((CO_EM_t*)CANmodule->EM, ERROR_CAN_TX_OVERFLOW, 0);
       return CO_ERROR_TX_OVERFLOW;
    }
 
    //messages with syncFlag set (synchronous PDOs) must be transmited inside preset time window
    if(CANmodule->curentSyncTimeIsInsideWindow && buffer->syncFlag && !(*CANmodule->curentSyncTimeIsInsideWindow)){
-      CO_errorReport((CO_EM_t*)CANmodule->EM, ERROR_TPDO_OUTSIDE_WINDOW, 0);
+      // Hack
+      // CO_errorReport((CO_EM_t*)CANmodule->EM, ERROR_TPDO_OUTSIDE_WINDOW, 0);
       return CO_ERROR_TX_PDO_WINDOW;
    }
 
@@ -495,7 +496,8 @@ void CO_CANclearPendingSyncPDOs(CO_CANmodule_t *CANmodule) {
     if (CANmodule->bufferInhibitFlag) {
         CANmodule->CANbaseAddress->TSR |= CAN_TSR_ABRQ0 | CAN_TSR_ABRQ1 | CAN_TSR_ABRQ2;
         ENABLE_INTERRUPTS();
-        CO_errorReport((CO_EM_t*) CANmodule->EM, ERROR_TPDO_OUTSIDE_WINDOW, 0);
+        // Hack
+        // CO_errorReport((CO_EM_t*) CANmodule->EM, ERROR_TPDO_OUTSIDE_WINDOW, 0);
     } else
         ENABLE_INTERRUPTS();
 }
@@ -518,14 +520,15 @@ void CO_CANverifyErrors(CO_CANmodule_t *CANmodule) {
          CANmodule->CANbaseAddress->RF0R &=~0x08;//clear bits
       }
 
-      //CAN TX bus off
-      if(err & 0x04) CO_errorReport(EM, ERROR_CAN_TX_BUS_OFF, err);
+      // CAN TX bus off
+      // Hack
+      if(err & 0x04) {} // CO_errorReport(EM, ERROR_CAN_TX_BUS_OFF, err);
       else           CO_errorReset(EM, ERROR_CAN_TX_BUS_OFF, err);
 
       //CAN TX or RX bus passive
       if(err & 0x02){
          // Hack
-         // if(!CANmodule->firstCANtxMessage) CO_errorReport(EM, ERROR_CAN_TX_BUS_PASSIVE, err);
+         if(!CANmodule->firstCANtxMessage) {} // CO_errorReport(EM, ERROR_CAN_TX_BUS_PASSIVE, err);
       }
       else{
          int16_t wasCleared;
@@ -536,10 +539,11 @@ void CO_CANverifyErrors(CO_CANmodule_t *CANmodule) {
 
       //CAN TX or RX bus warning
       if(err & 0x01){
-         CO_errorReport(EM, ERROR_CAN_BUS_WARNING, err);
+         // Hack
+         // CO_errorReport(EM, ERROR_CAN_BUS_WARNING, err);
       }
       else{
-         CO_errorReset(EM, ERROR_CAN_BUS_WARNING, err);
+        CO_errorReset(EM, ERROR_CAN_BUS_WARNING, err);
       }
    }
 }
@@ -635,7 +639,8 @@ void CO_CANinterrupt_Tx(CO_CANmodule_t *CANmodule) {
                 CANmodule->bufferInhibitFlag = 0;
                 if (CANmodule->curentSyncTimeIsInsideWindow && buffer->syncFlag) {
                     if (!(*CANmodule->curentSyncTimeIsInsideWindow)) {
-                        CO_errorReport((CO_EM_t*) CANmodule->EM, ERROR_TPDO_OUTSIDE_WINDOW, 0);
+                        // Hack
+                        // CO_errorReport((CO_EM_t*) CANmodule->EM, ERROR_TPDO_OUTSIDE_WINDOW, 0);
                         //release buffer
                         buffer->bufferFull = 0;
                         CANmodule->CANtxCount--;
