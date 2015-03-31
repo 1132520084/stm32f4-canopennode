@@ -39,6 +39,8 @@
 
 #include "CO_OD.h"
 
+#define ENABLE_CO_ERROR_REPORT
+
 void InitCanLeds() {
     GPIO_InitTypeDef GPIO_InitStructure;
     
@@ -459,16 +461,19 @@ int16_t CO_CANsend(CO_CANmodule_t *CANmodule, CO_CANtx_t *buffer) {
   
    //Was previous message sent or it is still waiting?
    if(buffer->bufferFull){
-      // Hack
-      if(!CANmodule->firstCANtxMessage) {} //don't set error, if bootup message is still on buffers
-         // CO_errorReport((CO_EM_t*)CANmodule->EM, ERROR_CAN_TX_OVERFLOW, 0);
+      if(!CANmodule->firstCANtxMessage){
+#ifdef ENABLE_CO_ERROR_REPORT
+         CO_errorReport((CO_EM_t*)CANmodule->EM, ERROR_CAN_TX_OVERFLOW, 0);
+#endif
+      }
       return CO_ERROR_TX_OVERFLOW;
    }
 
    //messages with syncFlag set (synchronous PDOs) must be transmited inside preset time window
    if(CANmodule->curentSyncTimeIsInsideWindow && buffer->syncFlag && !(*CANmodule->curentSyncTimeIsInsideWindow)){
-      // Hack
-      // CO_errorReport((CO_EM_t*)CANmodule->EM, ERROR_TPDO_OUTSIDE_WINDOW, 0);
+#ifdef ENABLE_CO_ERROR_REPORT
+      CO_errorReport((CO_EM_t*)CANmodule->EM, ERROR_TPDO_OUTSIDE_WINDOW, 0);
+#endif
       return CO_ERROR_TX_PDO_WINDOW;
    }
 
@@ -496,8 +501,9 @@ void CO_CANclearPendingSyncPDOs(CO_CANmodule_t *CANmodule) {
     if (CANmodule->bufferInhibitFlag) {
         CANmodule->CANbaseAddress->TSR |= CAN_TSR_ABRQ0 | CAN_TSR_ABRQ1 | CAN_TSR_ABRQ2;
         ENABLE_INTERRUPTS();
-        // Hack
-        // CO_errorReport((CO_EM_t*) CANmodule->EM, ERROR_TPDO_OUTSIDE_WINDOW, 0);
+#ifdef ENABLE_CO_ERROR_REPORT
+        CO_errorReport((CO_EM_t*) CANmodule->EM, ERROR_TPDO_OUTSIDE_WINDOW, 0);
+#endif
     } else
         ENABLE_INTERRUPTS();
 }
@@ -515,20 +521,27 @@ void CO_CANverifyErrors(CO_CANmodule_t *CANmodule) {
 
       //CAN RX bus overflow
       if(CANmodule->CANbaseAddress->RF0R & 0x08){
-         // Hack
-         // CO_errorReport(EM, ERROR_CAN_RXB_OVERFLOW, err);
+#ifdef ENABLE_CO_ERROR_REPORT
+         CO_errorReport(EM, ERROR_CAN_RXB_OVERFLOW, err);
+#endif
          CANmodule->CANbaseAddress->RF0R &=~0x08;//clear bits
       }
 
       // CAN TX bus off
-      // Hack
-      if(err & 0x04) {} // CO_errorReport(EM, ERROR_CAN_TX_BUS_OFF, err);
+      if(err & 0x04){
+#ifdef ENABLE_CO_ERROR_REPORT
+         CO_errorReport(EM, ERROR_CAN_TX_BUS_OFF, err);
+#endif
+      }
       else           CO_errorReset(EM, ERROR_CAN_TX_BUS_OFF, err);
 
       //CAN TX or RX bus passive
       if(err & 0x02){
-         // Hack
-         if(!CANmodule->firstCANtxMessage) {} // CO_errorReport(EM, ERROR_CAN_TX_BUS_PASSIVE, err);
+         if(!CANmodule->firstCANtxMessage){
+#ifdef ENABLE_CO_ERROR_REPORT
+            CO_errorReport(EM, ERROR_CAN_TX_BUS_PASSIVE, err);
+#endif
+         }
       }
       else{
          int16_t wasCleared;
@@ -539,8 +552,9 @@ void CO_CANverifyErrors(CO_CANmodule_t *CANmodule) {
 
       //CAN TX or RX bus warning
       if(err & 0x01){
-         // Hack
-         // CO_errorReport(EM, ERROR_CAN_BUS_WARNING, err);
+#ifdef ENABLE_CO_ERROR_REPORT
+         CO_errorReport(EM, ERROR_CAN_BUS_WARNING, err);
+#endif
       }
       else{
         CO_errorReset(EM, ERROR_CAN_BUS_WARNING, err);
@@ -639,8 +653,9 @@ void CO_CANinterrupt_Tx(CO_CANmodule_t *CANmodule) {
                 CANmodule->bufferInhibitFlag = 0;
                 if (CANmodule->curentSyncTimeIsInsideWindow && buffer->syncFlag) {
                     if (!(*CANmodule->curentSyncTimeIsInsideWindow)) {
-                        // Hack
-                        // CO_errorReport((CO_EM_t*) CANmodule->EM, ERROR_TPDO_OUTSIDE_WINDOW, 0);
+#ifdef ENABLE_CO_ERROR_REPORT
+                        CO_errorReport((CO_EM_t*) CANmodule->EM, ERROR_TPDO_OUTSIDE_WINDOW, 0);
+#endif
                         //release buffer
                         buffer->bufferFull = 0;
                         CANmodule->CANtxCount--;
